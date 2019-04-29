@@ -55,6 +55,7 @@ Assembly.
 | 5  | RGB LED display  |  [URL](projects/rgb_c) |
 | 6  | Output the Internal PIC clock | [URL](projects/osc_c) |
 | 7  | Light Dependent resistor Circuit |  [URL](projects/LDR) |
+| 8  | PWM Fan Circuit |  [URL](projects/pwm_fan) |
 
 
 Communication
