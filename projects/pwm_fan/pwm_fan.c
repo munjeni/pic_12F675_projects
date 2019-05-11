@@ -14,12 +14,13 @@
  *  Revision : None
  */
 
-/*  name            : pwm_fan.c
- *	purpose         : pwm fan for Dreambox DM920
- *	URL             : https://github.com/munjeni/pic_12F675_projects
- *	code based on   : two authors work above this comment
- *	date            : 29.04.2019
- *	Compiler        : xc8 v2.05
+/*  Name            : pwm_fan.c
+ *  Purpose         : pwm fan for Dreambox DM920
+ *  URL             : https://github.com/munjeni/pic_12F675_projects/tree/master/projects/pwm_fan
+ *  Code based on   : two authors work above this comment
+ *  Date            : 29.04.2019
+ *  Compiler        : xc8 v2.05
+ *  IDE             : xc8 ide v5.15
  */
 
 /*
@@ -46,8 +47,8 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
     ANSEL — ANALOG SELECT REGISTER
     ------------------------------------------------------------
       U-0   RW-0    RW-0    RW-0   RW-1   RW-1   RW-1   RW-1      (default values, 1=set, 0=set, x=unknown)
-	  —    ADCS2   ADCS1   ADCS0   ANS3   ANS2   ANS1   ANS0
-	bit7    bit6   bit5    bit4    bit3   bit2   bit1   bit0
+	  -    ADCS2   ADCS1   ADCS0   ANS3   ANS2   ANS1   ANS0
+	 bit7   bit6    bit5    bit4   bit3   bit2   bit1   bit0
 	------------------------------------------------------------
 	
 	bit 7 Unimplemented: Read as ‘0’.
@@ -74,7 +75,7 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 	ADCON0 — A/D CONTROL REGISTER	
     ------------------------------------------------------------
 	RW-0    RW-0    U-0     U-0    RW-0   RW-0    RW-0     RW-0     (default values, 1=set, 0=set, x=unknown)
-	ADFM    VCFG    —        —     CHS1   CHS0   GO/DONE   ADON
+	ADFM    VCFG     -       -     CHS1   CHS0   GO/DONE   ADON
 	bit7    bit6   bit5    bit4    bit3   bit2    bit1     bit0
 	------------------------------------------------------------
 
@@ -107,7 +108,7 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 	TRISIO — GPIO TRISTATE REGISTER
 	-----------------------------------------------------------------
 	 U-0     U-0    RW-x      RW-x     R-1        RW-x     RW-x     RW-x   (default values, 1=set, 0=set, x=unknown)
-	  —       —    TRISIO5  TRISIO4  TRISIO3    TRISIO2  TRISIO1   TRISIO0
+	  -       -    TRISIO5  TRISIO4  TRISIO3    TRISIO2  TRISIO1   TRISIO0
 	bit7     bit6   bit5      bit4    bit3        bit2     bit1     bit0
 	-----------------------------------------------------------------
 
@@ -121,17 +122,26 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 	
 	*/
 
+// PIC12F675 Configuration Bit Settings
+#pragma config FOSC = INTRCIO	// Oscillator Selection bits (INTOSC oscillator: I/O function on GP4/OSC2/CLKOUT pin, I/O function on GP5/OSC1/CLKIN)
+#pragma config WDTE = OFF		// Watchdog Timer Enable bit (WDT disabled)
+#pragma config PWRTE = ON		// Power-Up Timer Enable bit (PWRT enabled)
+#pragma config MCLRE = OFF		// MCLR
+#pragma config BOREN = ON		// Brown-out Detect Enable bit (BOD enabled)
+#pragma config CP = OFF			// Code Protection bit (Program Memory code protection is disabled)
+#pragma config CPD = OFF		// Data Code Protection bit (Data memory code protection is disabled)
+
 #include <xc.h>
 #include <stdio.h>	/* for sprintf */
-#include <stdint.h>	/* For uint8_t definitions etc */
-#include <string.h>	/* For strlen */
+#include <stdint.h>	/* For uint16_t definition */
 
-// set 0 to disable uart debug
-#define ENABLE_UART_DEBUG 1
+// set 0 to disable debuging
+#define ENABLE_UART_DEBUG   0
+#define DEBUG_TO_EEPROM   0
 
 // Define CPU Frequency
 // This must be defined, if __delay_ms() or __delay_us() functions are used in the code
-#define _XTAL_FREQ   4000000
+#define _XTAL_FREQ	4000000
 
 /*
 	PIC TIMER0 Calculator
@@ -147,31 +157,23 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 	(1000000/256) * 32 ~= 8mS				
 */
 
-// PIC12F675 Configuration Bit Settings 
-#pragma config FOSC = INTRCIO	// Oscillator Selection bits (INTOSC oscillator: I/O function on GP4/OSC2/CLKOUT pin, I/O function on GP5/OSC1/CLKIN)
-#pragma config WDTE = OFF		// Watchdog Timer Enable bit (WDT disabled)
-#pragma config PWRTE = ON		// Power-Up Timer Enable bit (PWRT enabled)
-#pragma config MCLRE = OFF		// MCLR
-#pragma config BOREN = ON		// Brown-out Detect Enable bit (BOD enabled)
-#pragma config CP = OFF			// Code Protection bit (Program Memory code protection is disabled)
-#pragma config CPD = OFF		// Data Code Protection bit (Data memory code protection is disabled)
-
 #if ENABLE_UART_DEBUG
-#define Baudrate              1200                      //bps
-#define OneBitDelay           (1000000/Baudrate)
-#define DataBitCount          8                         // no parity, no flow control
-#define UART_TX               GP1						// UART TX pin
-#define UART_TX_DIR			  TRISIO1					// UART TX pin direction register
+#define Baudrate        1200                //bps
+#define OneBitDelay     (1000000/Baudrate)  //...this might be wrong delay! See https://drive.google.com/file/d/0BwXmKaSw75eKdjI2elFsWW5Rd28/view
+#define DataBitCount    8                   // no parity, no flow control
+#define UART_TX         GP1                 // UART TX pin
+#define UART_TX_DIR     TRISIO1             // UART TX pin direction register
 #endif
 
-#define PWM_Pin               GP0
+#define PWM_Pin GP0
 // Define PWM variable, It can have a value 
 // from 0 (0% duty cycle) to 255 (100% duty cycle)
 unsigned char PWM = 0;
 
 #if ENABLE_UART_DEBUG
-void UART_Transmit(const char DataValue)
+void UART_Transmit(unsigned char DataValue)
 {
+	unsigned char i;
 	/* Basic Logic
 	   
 	   TX pin is usually high. A high to low bit is the starting bit and 
@@ -184,10 +186,10 @@ void UART_Transmit(const char DataValue)
 	UART_TX = 0;
 	__delay_us(OneBitDelay);
 
-	for (unsigned char i=0; i < DataBitCount; i++)
+	for (i=0; i < DataBitCount; i++)
 	{
 		// Set Data pin according to the DataValue
-		if (((DataValue>>i)&0x1) == 0x1)	//if Bit is high
+		if (((DataValue >> i) & 0x1) == 0x1)	//if Bit is high
 		{
 			UART_TX = 1;
 		}
@@ -212,66 +214,71 @@ unsigned int GetADCValue(void)
 
     __delay_ms(10);      // Time for Acqusition capacitor to charge up and show correct value
 
-	GO_nDONE  = 1;		 // Enable Go/Done
+	GO_nDONE = 1;		 // Enable Go/Done
 
 	while(GO_nDONE);     //wait for conversion completion
 
 	return ((ADRESH<<8)+ADRESL);   // Return 10 bit ADC value
 }
 
-void interrupt ISR(void)
+void __interrupt() ISR(void)
 {
-	if(T0IF)  //If Timer0 Interrupt
+	if(T0IF)            // If Timer0 Interrupt
 	{
-		if(PWM_Pin)	// if PWM_Pin is high
-		{
-			PWM_Pin = 0;
-			TMR0 = PWM;
-		}
-		else	     // if PWM_Pin is low
-		{
-			PWM_Pin = 1;
-			TMR0 = 255 - PWM;
-		}
+        if (!PWM)       // Since this frequency is in audible range, shutdown motor noise
+        {
+            PWM_Pin = 0;
+            TMR0 = PWM;
+        }
+        else
+        {
+            if(PWM_Pin)     // if PWM_Pin is high
+            {
+                PWM_Pin = 0;
+                TMR0 = PWM;
+            }
+            else            // if PWM_Pin is low
+            {
+                PWM_Pin = 1;
+                TMR0 = 255 - PWM;
+            }
+        }
 
-		T0IF = 0;   // Clear the interrupt
+		T0IF = 0;       // Clear the interrupt
 	}
 }
 
-void main()
+void main(void)
 {	
 	unsigned int ADC_value = 0;
-	//unsigned int ADC_value = 71;	//(Temperature: 34.79 C)(pwm 30% = 77)
-	//unsigned int ADC_value = 113;	//(Temperature: 55.37 C)(pwm 100% = 255)
 #if ENABLE_UART_DEBUG
-	uint16_t temperature = 1;
+	unsigned int temperature = 1;
 	char str1[3];
 	char str2[3];
 	char str3[5];
-	size_t i;
+	uint8_t i;
 #endif
 
-	// Initialize GP4 as ADC input pin
-	ANSEL  = 0x18;	      // Clear Pin selection bits
-	TRISIO = 0x10;       // GP4 input, rest all output
-	ADCON0 = 0x81;		 // Turn on the A/D Converter ADFM and ADON
-	CMCON  = 0x07;		 // Shut off the Comparator, so that pins are available for ADC
-	VRCON  = 0x00;	     // Shut off the Voltage Reference for Comparator
+	OSCCAL = __osccal_val();    // Load Oscillator Calibration
+	ANSEL  = 0x48;              // Clear Pin selection bits (set FOSC/4 ; ANS3 analog input)
+	TRISIO = 0x10;              // GP4 input, rest all output
+	GPIO   = 0x00;              // Clear gpio
+	ADCON0 = 0x81;		        // Turn on the A/D Converter ADFM and ADON
+	CMCON  = 0x07;		        // Shut off the Comparator, so that pins are available for ADC
+	VRCON  = 0x00;	            // Shut off the Voltage Reference for Comparator
 
 	// Initialize PWM
 	// Use timer0 for making PWM
-	OPTION_REG &= 0xCC;		// Intialise timer0
-	//INTCON = 0b10100000;		// Global Interrupt Enabled and TMR0 Overflow Interrupt Enabled
-	TMR0 = 0;		// Preload timer register
-	T0IE = 1;		// Enable Timer0 interrupt
-	GIE = 1;		// Enable global interrupts
-
-	GPIO = 0x00;       // Make all pins 0
+	OPTION_REG &= 0xcc;         // Intialise timer0 (prescaler 1/32)
+	//INTCON = 0b10100000;      // Global Interrupt Enabled and TMR0 Overflow Interrupt Enabled
+	TMR0 = 0;                   // Preload timer register
+	T0IE = 1;                   // Enable Timer0 interrupt
+	GIE = 1;                    // Enable global interrupts
 
 #if ENABLE_UART_DEBUG
 	// Intialize Soft UART
-	UART_TX = 1;			// TX pin is high in idle state	GP1=1
-	UART_TX_DIR = 0;		// set TRISIO1=0 as output direction
+	UART_TX = 1;                // TX pin is high in idle state	GP1=1
+	UART_TX_DIR = 0;            // set TRISIO1=0 as output direction
 #endif
 
 	while(1)
@@ -281,88 +288,20 @@ void main()
 #if ENABLE_UART_DEBUG		
 		for (i=0; i<5; i++) str3[i] = '\0';
 #endif
-
-		/*
-		pwm table:
-		------------
-		(adc)71 =  (pwm)77  = 30%
-		(adc)77 =  (pwm)102 = 40%
-		(adc)83 =  (pwm)127 = 50%
-		(adc)89 =  (pwm)152 = 60%
-		(adc)95 =  (pwm)177 = 70%
-		(adc)101 = (pwm)202 = 80%
-		(adc)107 = (pwm)227 = 90%
-		(adc)113 = (pwm)255 = 100%
-		*/
 	
-		if (ADC_value < 71) {
-			PWM = 0;
-#if ENABLE_UART_DEBUG
-			sprintf(str3, "%u", ADC_value);
-#endif
-		}
-	
-		if (ADC_value >= 71 && ADC_value < 77) {
-			PWM = 77;
-#if ENABLE_UART_DEBUG
-			sprintf(str3, "%u", ADC_value);
-#endif
-		}
-	
-		if (ADC_value >= 77 && ADC_value < 83) {
-			PWM = 102;
-#if ENABLE_UART_DEBUG
-			sprintf(str3, "%u", ADC_value);
-#endif
-		}
-	
-		if (ADC_value >= 83 && ADC_value < 89) {
-			PWM = 127;
-#if ENABLE_UART_DEBUG
-			sprintf(str3, "%u", ADC_value);
-#endif
-		}
-	
-		if (ADC_value >= 89 && ADC_value < 95) {
-			PWM = 152;
-#if ENABLE_UART_DEBUG
-			sprintf(str3, "%u", ADC_value);
-#endif
-		}
-	
-		if (ADC_value >= 95 && ADC_value < 101) {
-			PWM = 177;
-#if ENABLE_UART_DEBUG
-			sprintf(str3, "%u", ADC_value);
-#endif
-		}
-	
-		if (ADC_value >= 101 && ADC_value < 107) {
-			PWM = 202;
-#if ENABLE_UART_DEBUG
-			sprintf(str3, "%u", ADC_value);
-#endif
-		}
-	
-		if (ADC_value >= 107 && ADC_value < 113) {
-			PWM = 227;
-#if ENABLE_UART_DEBUG
-			sprintf(str3, "%u", ADC_value);
-#endif
-		}
-	
-		if (ADC_value >= 113) {
-			PWM = 255;
-#if ENABLE_UART_DEBUG
-			sprintf(str3, "%u", ADC_value);
-#endif
-		}
+		if (ADC_value < 75) PWM = 0;
+		if (ADC_value >= 75 && ADC_value < 78) PWM = 200;
+		if (ADC_value >= 78 && ADC_value < 81) PWM = 215;
+		if (ADC_value >= 81 && ADC_value < 84) PWM = 230;
+		if (ADC_value >= 84 && ADC_value < 87) PWM = 245;
+		if (ADC_value >= 87) PWM = 255;
 
 #if ENABLE_UART_DEBUG
 		temperature = (ADC_value*49);
 
 		sprintf(str1, "%u%u", (temperature/1000)%10, (temperature/100)%10);
 		sprintf(str2, "%u%u", (temperature/10)%10, (temperature/1)%10);
+		sprintf(str3, "%u", ADC_value);
 
 		UART_Transmit('T');
 		UART_Transmit('e');
@@ -377,13 +316,9 @@ void main()
 		UART_Transmit('e');
 		UART_Transmit(':');
 		UART_Transmit(' ');
-
 		for (i=0; i<2; i++) UART_Transmit(str1[i]);
-
 		UART_Transmit('.');		
-
 		for (i=0; i<2; i++) UART_Transmit(str2[i]);
-
 		UART_Transmit(' ');
 		UART_Transmit('C');
 
@@ -394,10 +329,35 @@ void main()
 		UART_Transmit('C');
 		UART_Transmit(':');
 		UART_Transmit(' ');
+		for (i=0; i<5; i++)
+        {
+            if (str3[i] == '\0') break;
+            UART_Transmit(str3[i]);
+        }
 
-		for (i=0; i<strlen(str3); i++) UART_Transmit(str3[i]);
+		UART_Transmit(0x0D);
+        UART_Transmit(0x0A);
 
-		UART_Transmit(0x0A);
+#if DEBUG_TO_EEPROM
+        /*  In case you can't get UART working so write log to EEPROM
+         *  e.g. T=18.62 celsius A=38 adc_value :)
+         */
+        eeprom_write(0, 'T');
+        eeprom_write(1, '=');
+        eeprom_write(2, str1[0]);
+        eeprom_write(3, str1[1]);
+        eeprom_write(4, '.');
+        eeprom_write(5, str2[0]);
+        eeprom_write(6, str2[1]);
+        eeprom_write(7, ' ');
+        eeprom_write(8, 'A');
+        eeprom_write(9, '=');
+		for (i=10; i<15; i++)
+        {
+            if (str3[i-10] == '\0') break;
+            eeprom_write(i, str3[i-10]);
+        }
+#endif
 #endif
 
 		__delay_ms(500);	// Half second delay before next reading	
