@@ -40,18 +40,14 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 
 =======================================================================
 
-*/
-
-	/*
-
-    ANSEL — ANALOG SELECT REGISTER
+    ANSEL - ANALOG SELECT REGISTER
     ------------------------------------------------------------
       U-0   RW-0    RW-0    RW-0   RW-1   RW-1   RW-1   RW-1      (default values, 1=set, 0=set, x=unknown)
 	  -    ADCS2   ADCS1   ADCS0   ANS3   ANS2   ANS1   ANS0
 	 bit7   bit6    bit5    bit4   bit3   bit2   bit1   bit0
 	------------------------------------------------------------
 	
-	bit 7 Unimplemented: Read as ‘0’.
+	bit 7 Unimplemented: Read as '0'.
 	
 	bit 6-4 ADCS<2:0>: A/D Conversion Clock Select bits
 	000 = FOSC/2
@@ -72,7 +68,7 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 	to Input mode in order to allow external control of the voltage on the pin.
 
 
-	ADCON0 — A/D CONTROL REGISTER	
+	ADCON0 - A/D CONTROL REGISTER
     ------------------------------------------------------------
 	RW-0    RW-0    U-0     U-0    RW-0   RW-0    RW-0     RW-0     (default values, 1=set, 0=set, x=unknown)
 	ADFM    VCFG     -       -     CHS1   CHS0   GO/DONE   ADON
@@ -105,14 +101,14 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 	0 = A/D converter is shut-off and consumes no operating current
 
 	
-	TRISIO — GPIO TRISTATE REGISTER
+	TRISIO - GPIO TRISTATE REGISTER
 	-----------------------------------------------------------------
 	 U-0     U-0    RW-x      RW-x     R-1        RW-x     RW-x     RW-x   (default values, 1=set, 0=set, x=unknown)
 	  -       -    TRISIO5  TRISIO4  TRISIO3    TRISIO2  TRISIO1   TRISIO0
 	bit7     bit6   bit5      bit4    bit3        bit2     bit1     bit0
 	-----------------------------------------------------------------
 
-	bit 7-6: Unimplemented: Read as ’0’
+	bit 7-6: Unimplemented: Read as '0'
 	
 	bit 5-0: TRISIO<5:0>: General Purpose I/O Tri-State Control bit
 	1 = GPIO pin configured as an input (tri-stated)
@@ -120,7 +116,7 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 	
 	Note: TRISIO<3> always reads 1.
 	
-	*/
+*/
 
 // PIC12F675 Configuration Bit Settings
 #pragma config FOSC = INTRCIO	// Oscillator Selection bits (INTOSC oscillator: I/O function on GP4/OSC2/CLKOUT pin, I/O function on GP5/OSC1/CLKIN)
@@ -193,12 +189,12 @@ void UART_Transmit(unsigned char DataValue)
 		{
 			UART_TX = 1;
 		}
-		else	// if Bit is low
+		else			// if Bit is low
 		{
 			UART_TX = 0;
 		}
 
-	    __delay_us(OneBitDelay);
+		__delay_us(OneBitDelay);
 	}
 
 	// Send Stop Bit
@@ -209,48 +205,49 @@ void UART_Transmit(unsigned char DataValue)
 
 unsigned int GetADCValue(void)
 {
-	ADCON0 &= 0xf3;      // Clear Channel selection bits 
-    ADCON0 |= 0x0c;      // Select GP4 pin as ADC input CHS1:CHS0: to 11
+	ADCON0 &= 0xf3;			// Clear Channel selection bits
+	ADCON0 |= 0x0c;			// Select GP4 pin as ADC input CHS1:CHS0: to 11
 
-    __delay_ms(10);      // Time for Acqusition capacitor to charge up and show correct value
+	__delay_ms(10);			// Time for Acqusition capacitor to charge up and show correct value
 
-	GO_nDONE = 1;		 // Enable Go/Done
+	GO_nDONE = 1;			// Enable Go/Done
 
-	while(GO_nDONE);     //wait for conversion completion
+	while(GO_nDONE);		//wait for conversion completion
 
-	return ((ADRESH<<8)+ADRESL);   // Return 10 bit ADC value
+	return ((ADRESH<<8)+ADRESL);	// Return 10 bit ADC value
 }
 
 void __interrupt() ISR(void)
 {
-	if(T0IF)            // If Timer0 Interrupt
+	if(T0IF)			// If Timer0 Interrupt
 	{
-        if (!PWM)       // Since this frequency is in audible range, shutdown motor noise
-        {
-            PWM_Pin = 0;
-            TMR0 = PWM;
-        }
-        else
-        {
-            if(PWM_Pin)     // if PWM_Pin is high
-            {
-                PWM_Pin = 0;
-                TMR0 = PWM;
-            }
-            else            // if PWM_Pin is low
-            {
-                PWM_Pin = 1;
-                TMR0 = 255 - PWM;
-            }
-        }
+		if (!PWM)		// Since this frequency is in audible range, shutdown motor noise
+		{
+			PWM_Pin = 0;
+			TMR0 = PWM;
+		}
+		else
+		{
+			if(PWM_Pin)	// if PWM_Pin is high
+			{
+				PWM_Pin = 0;
+				TMR0 = PWM;
+			}
+			else		// if PWM_Pin is low
+			{
+				PWM_Pin = 1;
+				TMR0 = 255 - PWM;
+			}
+		}
 
-		T0IF = 0;       // Clear the interrupt
+		T0IF = 0;		// Clear the interrupt
 	}
 }
 
 void main(void)
 {	
 	unsigned int ADC_value = 0;
+	unsigned int ADC_value_prev = 0;    // Store previous result
 #if ENABLE_UART_DEBUG
 	unsigned int temperature = 1;
 	char str1[3];
@@ -288,13 +285,20 @@ void main(void)
 #if ENABLE_UART_DEBUG		
 		for (i=0; i<5; i++) str3[i] = '\0';
 #endif
-	
-		if (ADC_value < 75) PWM = 0;
-		if (ADC_value >= 75 && ADC_value < 78) PWM = 200;
-		if (ADC_value >= 78 && ADC_value < 81) PWM = 215;
-		if (ADC_value >= 81 && ADC_value < 84) PWM = 230;
-		if (ADC_value >= 84 && ADC_value < 87) PWM = 245;
-		if (ADC_value >= 87) PWM = 255;
+
+		if (ADC_value_prev != ADC_value)
+			ADC_value_prev = ADC_value;
+
+		ADC_value = (ADC_value + ADC_value_prev) / 2;   //4 * ()
+
+		// Calculation formula: comparation_value = ( temperature_you_need * 0.01 ) / 0.004883
+		// Temperature_you_need is temperature of the cpu heat sink and not a current cpu temperature!
+		if (ADC_value < 76) PWM = 0;                        // lower than 37 C
+		if (ADC_value >= 76 && ADC_value < 80) PWM = 200;   // lower than 39 C
+		if (ADC_value >= 80 && ADC_value < 84) PWM = 215;   // lower than 41 C
+		if (ADC_value >= 84 && ADC_value < 88) PWM = 230;   // lower than 43 C
+		if (ADC_value >= 88 && ADC_value < 92) PWM = 245;   // lower than 45 C
+		if (ADC_value >= 92) PWM = 255;                     // more  than 45 C
 
 #if ENABLE_UART_DEBUG
 		temperature = (ADC_value*49);
@@ -330,33 +334,33 @@ void main(void)
 		UART_Transmit(':');
 		UART_Transmit(' ');
 		for (i=0; i<5; i++)
-        {
-            if (str3[i] == '\0') break;
-            UART_Transmit(str3[i]);
-        }
+		{
+			if (str3[i] == '\0') break;
+			UART_Transmit(str3[i]);
+		}
 
 		UART_Transmit(0x0D);
-        UART_Transmit(0x0A);
+		UART_Transmit(0x0A);
 
 #if DEBUG_TO_EEPROM
-        /*  In case you can't get UART working so write log to EEPROM
-         *  e.g. T=18.62 celsius A=38 adc_value :)
-         */
-        eeprom_write(0, 'T');
-        eeprom_write(1, '=');
-        eeprom_write(2, str1[0]);
-        eeprom_write(3, str1[1]);
-        eeprom_write(4, '.');
-        eeprom_write(5, str2[0]);
-        eeprom_write(6, str2[1]);
-        eeprom_write(7, ' ');
-        eeprom_write(8, 'A');
-        eeprom_write(9, '=');
+		/*  In case you can't get UART working so write log to EEPROM
+		 *  e.g. T=18.62 celsius A=38 adc_value :)
+		 */
+		eeprom_write(0, 'T');
+		eeprom_write(1, '=');
+		eeprom_write(2, str1[0]);
+		eeprom_write(3, str1[1]);
+		eeprom_write(4, '.');
+		eeprom_write(5, str2[0]);
+		eeprom_write(6, str2[1]);
+		eeprom_write(7, ' ');
+		eeprom_write(8, 'A');
+		eeprom_write(9, '=');
 		for (i=10; i<15; i++)
-        {
-            if (str3[i-10] == '\0') break;
-            eeprom_write(i, str3[i-10]);
-        }
+		{
+			if (str3[i-10] == '\0') break;
+			eeprom_write(i, str3[i-10]);
+		}
 #endif
 #endif
 
