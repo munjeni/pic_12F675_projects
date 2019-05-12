@@ -282,14 +282,15 @@ void main(void)
 	{
 		ADC_value = GetADCValue();
 
+		if (ADC_value_prev == 0)
+			ADC_value_prev = ADC_value;
+
 #if ENABLE_UART_DEBUG		
 		for (i=0; i<5; i++) str3[i] = '\0';
 #endif
 
-		if (ADC_value_prev != ADC_value)
-			ADC_value_prev = ADC_value;
-
-		ADC_value = (ADC_value + ADC_value_prev) / 2;   //4 * ()
+		ADC_value = (ADC_value + ADC_value_prev) / 2;
+		ADC_value_prev = ADC_value;
 
 		// Calculation formula: comparation_value = ( temperature_you_need * 0.01 ) / 0.004883
 		// Temperature_you_need is temperature of the cpu heat sink and not a current cpu temperature!
