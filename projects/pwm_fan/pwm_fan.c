@@ -115,6 +115,45 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 	0 = GPIO pin configured as an output.
 	
 	Note: TRISIO<3> always reads 1.
+
+
+	OPTION_REG - OPTION REGISTER (ADDRESS: 81h)
+	------------------------------------------------------------------
+	RW-1    RW-1    RW-1     RW-1     RW-1     RW-1      RW-1     RW-1    ((default values, 1=set, 0=set)
+	GPPU   INTEDG   T0CS     T0SE      PSA      PS2       PS1      PS0
+	bit7    bit6    bit5     bit4     bit3     bit2      bit1     bit0
+	-------------------------------------------------------------------
+
+	bit 7 GPPU: GPIO Pull-up Enable bit
+	1 = GPIO pull-ups are disabled
+	0 = GPIO pull-ups are enabled by individual port latch values
+
+	bit 6 INTEDG: Interrupt Edge Select bit
+	1 = Interrupt on rising edge of GP2/INT pin
+	0 = Interrupt on falling edge of GP2/INT pin
+
+	bit 5 T0CS: TMR0 Clock Source Select bit
+	1 = Transition on GP2/T0CKI pin
+	0 = Internal instruction cycle clock (CLKOUT)
+
+	bit 4 T0SE: TMR0 Source Edge Select bit
+	1 = Increment on high-to-low transition on GP2/T0CKI pin
+	0 = Increment on low-to-high transition on GP2/T0CKI pin
+
+	bit 3 PSA: Prescaler Assignment bit
+	1 = Prescaler is assigned to the WDT
+	0 = Prescaler is assigned to the TIMER0 module
+
+	bit 2-0 PS2:PS0: Prescaler Rate Select bits
+	Bit Value        TMR0 Rate          WDT Rate
+	   000              1/2               1/1
+	   001              1/4               1/2
+	   010              1/8               1/4
+	   011              1/16              1/8
+	   100              1/32              1/16
+	   101              1/64              1/32
+	   110              1/128             1/64
+	   111              1/256             1/128
 	
 */
 
@@ -134,6 +173,9 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 // set 0 to disable debuging
 #define ENABLE_UART_DEBUG   0
 #define DEBUG_TO_EEPROM   0
+
+// How many samples from LM35 for more accurate result
+#define LM35_SAMPLES	40
 
 // Define CPU Frequency
 // This must be defined, if __delay_ms() or __delay_us() functions are used in the code
@@ -205,8 +247,8 @@ void UART_Transmit(unsigned char DataValue)
 
 unsigned int GetADCValue(void)
 {
-	ADCON0 &= 0xf3;			// Clear Channel selection bits
-	ADCON0 |= 0x0c;			// Select GP4 pin as ADC input CHS1:CHS0: to 11
+	//ADCON0 &= 0xf3;			// Clear Channel selection bits
+	//ADCON0 |= 0x0c;			// Select GP4 pin as ADC input CHS1:CHS0: to 11
 
 	__delay_ms(10);			// Time for Acqusition capacitor to charge up and show correct value
 
@@ -247,26 +289,25 @@ void __interrupt() ISR(void)
 void main(void)
 {	
 	unsigned int ADC_value = 0;
-	unsigned int ADC_value_prev = 0;    // Store previous result
 #if ENABLE_UART_DEBUG
 	unsigned int temperature = 1;
 	char str1[3];
 	char str2[3];
 	char str3[5];
-	uint8_t i;
 #endif
+	uint8_t i;
 
 	OSCCAL = __osccal_val();    // Load Oscillator Calibration
 	ANSEL  = 0x48;              // Clear Pin selection bits (set FOSC/4 ; ANS3 analog input)
 	TRISIO = 0x10;              // GP4 input, rest all output
 	GPIO   = 0x00;              // Clear gpio
-	ADCON0 = 0x81;		        // Turn on the A/D Converter ADFM and ADON
+	ADCON0 = 0x8D;		        // Turn on the A/D Converter ADFM and ADON ; set channel to AN3
 	CMCON  = 0x07;		        // Shut off the Comparator, so that pins are available for ADC
 	VRCON  = 0x00;	            // Shut off the Voltage Reference for Comparator
 
 	// Initialize PWM
 	// Use timer0 for making PWM
-	OPTION_REG &= 0xcc;         // Intialise timer0 (prescaler 1/32)
+	OPTION_REG &= 0xC4;         // Intialise timer0 (prescaler 1/32 ; prescaler assigned to timer0)
 	//INTCON = 0b10100000;      // Global Interrupt Enabled and TMR0 Overflow Interrupt Enabled
 	TMR0 = 0;                   // Preload timer register
 	T0IE = 1;                   // Enable Timer0 interrupt
@@ -280,17 +321,14 @@ void main(void)
 
 	while(1)
 	{
-		ADC_value = GetADCValue();
+		for (i=0; i < LM35_SAMPLES; i++)
+			ADC_value += GetADCValue();
 
-		if (ADC_value_prev == 0)
-			ADC_value_prev = ADC_value;
+		ADC_value /= LM35_SAMPLES;
 
 #if ENABLE_UART_DEBUG		
 		for (i=0; i<5; i++) str3[i] = '\0';
 #endif
-
-		ADC_value = (ADC_value + ADC_value_prev) / 2;
-		ADC_value_prev = ADC_value;
 
 		// Calculation formula: comparation_value = ( temperature_you_need * 0.01 ) / 0.004883
 		// Temperature_you_need is temperature of the cpu heat sink and not a current cpu temperature!
@@ -365,6 +403,6 @@ void main(void)
 #endif
 #endif
 
-		__delay_ms(500);	// Half second delay before next reading	
+		__delay_ms(600);	// 1 second delay before next reading = 600 + (LM35_SAMPLES * 10) = 1000ms total
 	}
 }
