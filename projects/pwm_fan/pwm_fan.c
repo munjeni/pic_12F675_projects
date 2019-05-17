@@ -40,9 +40,9 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 
 =======================================================================
 
-    ANSEL - ANALOG SELECT REGISTER
-    ------------------------------------------------------------
-      U-0   RW-0    RW-0    RW-0   RW-1   RW-1   RW-1   RW-1      (default values, 1=set, 0=set, x=unknown)
+	ANSEL - ANALOG SELECT REGISTER
+	------------------------------------------------------------
+	 U-0   RW-0    RW-0    RW-0    RW-1   RW-1   RW-1   RW-1      (default values, 1=set, 0=set, x=unknown)
 	  -    ADCS2   ADCS1   ADCS0   ANS3   ANS2   ANS1   ANS0
 	 bit7   bit6    bit5    bit4   bit3   bit2   bit1   bit0
 	------------------------------------------------------------
@@ -69,7 +69,7 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 
 
 	ADCON0 - A/D CONTROL REGISTER
-    ------------------------------------------------------------
+	------------------------------------------------------------
 	RW-0    RW-0    U-0     U-0    RW-0   RW-0    RW-0     RW-0     (default values, 1=set, 0=set, x=unknown)
 	ADFM    VCFG     -       -     CHS1   CHS0   GO/DONE   ADON
 	bit7    bit6   bit5    bit4    bit3   bit2    bit1     bit0
@@ -105,7 +105,7 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 	-----------------------------------------------------------------
 	 U-0     U-0    RW-x      RW-x     R-1        RW-x     RW-x     RW-x   (default values, 1=set, 0=set, x=unknown)
 	  -       -    TRISIO5  TRISIO4  TRISIO3    TRISIO2  TRISIO1   TRISIO0
-	bit7     bit6   bit5      bit4    bit3        bit2     bit1     bit0
+	 bit7    bit6   bit5      bit4    bit3        bit2     bit1     bit0
 	-----------------------------------------------------------------
 
 	bit 7-6: Unimplemented: Read as '0'
@@ -158,7 +158,7 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 */
 
 // PIC12F675 Configuration Bit Settings
-#pragma config FOSC = INTRCIO	// Oscillator Selection bits (INTOSC oscillator: I/O function on GP4/OSC2/CLKOUT pin, I/O function on GP5/OSC1/CLKIN)
+#pragma config FOSC = INTRCIO		// Oscillator Selection bits (INTOSC oscillator: I/O function on GP4/OSC2/CLKOUT pin, I/O function on GP5/OSC1/CLKIN)
 #pragma config WDTE = OFF		// Watchdog Timer Enable bit (WDT disabled)
 #pragma config PWRTE = ON		// Power-Up Timer Enable bit (PWRT enabled)
 #pragma config MCLRE = OFF		// MCLR
@@ -174,7 +174,7 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 #define ENABLE_UART_DEBUG   0
 #define DEBUG_TO_EEPROM   0
 
-// How many samples from LM35 for more accurate result
+// How many samples from LM35 for more accourate result
 #define LM35_SAMPLES	40
 
 // Define CPU Frequency
@@ -231,7 +231,7 @@ void UART_Transmit(unsigned char DataValue)
 		{
 			UART_TX = 1;
 		}
-		else			// if Bit is low
+		else					// if Bit is low
 		{
 			UART_TX = 0;
 		}
@@ -247,8 +247,8 @@ void UART_Transmit(unsigned char DataValue)
 
 unsigned int GetADCValue(void)
 {
-	//ADCON0 &= 0xf3;			// Clear Channel selection bits
-	//ADCON0 |= 0x0c;			// Select GP4 pin as ADC input CHS1:CHS0: to 11
+	//ADCON0 &= 0xf3;		// Clear Channel selection bits
+	//ADCON0 |= 0x0c;		// Select GP4 pin as ADC input CHS1:CHS0: to 11
 
 	__delay_ms(10);			// Time for Acqusition capacitor to charge up and show correct value
 
@@ -301,8 +301,8 @@ void main(void)
 	ANSEL  = 0x48;              // Clear Pin selection bits (set FOSC/4 ; ANS3 analog input)
 	TRISIO = 0x10;              // GP4 input, rest all output
 	GPIO   = 0x00;              // Clear gpio
-	ADCON0 = 0x8D;		        // Turn on the A/D Converter ADFM and ADON ; set channel to AN3
-	CMCON  = 0x07;		        // Shut off the Comparator, so that pins are available for ADC
+	ADCON0 = 0x8D;              // Turn on the A/D Converter ADFM and ADON ; set channel to AN3
+	CMCON  = 0x07;              // Shut off the Comparator, so that pins are available for ADC
 	VRCON  = 0x00;	            // Shut off the Voltage Reference for Comparator
 
 	// Initialize PWM
@@ -333,10 +333,14 @@ void main(void)
 		// Calculation formula: comparation_value = ( temperature_you_need * 0.01 ) / 0.004883
 		// Temperature_you_need is temperature of the cpu heat sink and not a current cpu temperature!
 		if (ADC_value < 76) PWM = 0;                        // lower than 37 C
-		if (ADC_value >= 76 && ADC_value < 80) PWM = 200;   // lower than 39 C
-		if (ADC_value >= 80 && ADC_value < 84) PWM = 215;   // lower than 41 C
-		if (ADC_value >= 84 && ADC_value < 88) PWM = 230;   // lower than 43 C
-		if (ADC_value >= 88 && ADC_value < 92) PWM = 245;   // lower than 45 C
+		if (ADC_value >= 76 && ADC_value < 78) PWM = 175;   // lower than 38 C
+		if (ADC_value >= 78 && ADC_value < 80) PWM = 185;   // lower than 39 C
+		if (ADC_value >= 80 && ADC_value < 82) PWM = 195;   // lower than 40 C
+		if (ADC_value >= 82 && ADC_value < 84) PWM = 205;   // lower than 41 C
+		if (ADC_value >= 84 && ADC_value < 86) PWM = 215;   // lower than 42 C
+		if (ADC_value >= 86 && ADC_value < 88) PWM = 225;   // lower than 43 C
+		if (ADC_value >= 88 && ADC_value < 90) PWM = 235;   // lower than 44 C
+		if (ADC_value >= 90 && ADC_value < 92) PWM = 245;   // lower than 45 C
 		if (ADC_value >= 92) PWM = 255;                     // more  than 45 C
 
 #if ENABLE_UART_DEBUG
@@ -406,3 +410,4 @@ void main(void)
 		__delay_ms(600);	// 1 second delay before next reading = 600 + (LM35_SAMPLES * 10) = 1000ms total
 	}
 }
+
