@@ -333,13 +333,13 @@ void main(void)
 		// Calculation formula: comparation_value = ( temperature_you_need * 0.01 ) / 0.004883
 		// Temperature_you_need is temperature of the cpu heat sink and not a current cpu temperature!
 		if (ADC_value < 76) PWM = 0;                        // lower than 37 C
-		if (ADC_value >= 76 && ADC_value < 78) PWM = 175;   // lower than 38 C
-		if (ADC_value >= 78 && ADC_value < 80) PWM = 185;   // lower than 39 C
-		if (ADC_value >= 80 && ADC_value < 82) PWM = 195;   // lower than 40 C
-		if (ADC_value >= 82 && ADC_value < 84) PWM = 205;   // lower than 41 C
-		if (ADC_value >= 84 && ADC_value < 86) PWM = 215;   // lower than 42 C
-		if (ADC_value >= 86 && ADC_value < 88) PWM = 225;   // lower than 43 C
-		if (ADC_value >= 88 && ADC_value < 90) PWM = 235;   // lower than 44 C
+		if (ADC_value >= 76 && ADC_value < 78) PWM = 77;    // lower than 38 C
+		if (ADC_value >= 78 && ADC_value < 80) PWM = 102;   // lower than 39 C
+		if (ADC_value >= 80 && ADC_value < 82) PWM = 127;   // lower than 40 C
+		if (ADC_value >= 82 && ADC_value < 84) PWM = 152;   // lower than 41 C
+		if (ADC_value >= 84 && ADC_value < 86) PWM = 177;   // lower than 42 C
+		if (ADC_value >= 86 && ADC_value < 88) PWM = 202;   // lower than 43 C
+		if (ADC_value >= 88 && ADC_value < 90) PWM = 227;   // lower than 44 C
 		if (ADC_value >= 90 && ADC_value < 92) PWM = 245;   // lower than 45 C
 		if (ADC_value >= 92) PWM = 255;                     // more  than 45 C
 
