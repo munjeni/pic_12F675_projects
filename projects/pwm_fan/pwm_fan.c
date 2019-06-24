@@ -212,6 +212,8 @@ unsigned char PWM = 0;
 void UART_Transmit(unsigned char DataValue)
 {
 	unsigned char i;
+	unsigned int count = 0;
+
 	/* Basic Logic
 	   
 	   TX pin is usually high. A high to low bit is the starting bit and 
@@ -222,7 +224,11 @@ void UART_Transmit(unsigned char DataValue)
 
 	// Send Start Bit
 	UART_TX = 0;
-	__delay_us(OneBitDelay);
+	//__delay_us(OneBitDelay);
+	while(count < 8) {
+		count++;
+		__delay_us(83);
+	}
 
 	for (i=0; i < DataBitCount; i++)
 	{
@@ -231,17 +237,27 @@ void UART_Transmit(unsigned char DataValue)
 		{
 			UART_TX = 1;
 		}
-		else					// if Bit is low
+		else			// if Bit is low
 		{
 			UART_TX = 0;
 		}
 
-		__delay_us(OneBitDelay);
+		//__delay_us(OneBitDelay);
+		count = 0;
+		while(count < 8) {
+			count++;
+			__delay_us(83);
+		}
 	}
 
 	// Send Stop Bit
 	UART_TX = 1;
-	__delay_us(OneBitDelay);
+	//__delay_us(OneBitDelay);
+	count = 0;
+	while(count < 8) {
+		count++;
+		__delay_us(83);
+	}
 }
 #endif
 
