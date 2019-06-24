@@ -24,9 +24,9 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 
 =======================================================================
 
-    ANSEL - ANALOG SELECT REGISTER
-    ------------------------------------------------------------
-      U-0   RW-0    RW-0    RW-0   RW-1   RW-1   RW-1   RW-1      (default values, 1=set, 0=set, x=unknown)
+         ANSEL - ANALOG SELECT REGISTER
+        ------------------------------------------------------------
+          U-0   RW-0    RW-0    RW-0   RW-1   RW-1   RW-1   RW-1      (default values, 1=set, 0=set, x=unknown)
 	  -    ADCS2   ADCS1   ADCS0   ANS3   ANS2   ANS1   ANS0
 	 bit7   bit6    bit5    bit4   bit3   bit2   bit1   bit0
 	------------------------------------------------------------
@@ -53,7 +53,7 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 
 
 	ADCON0 - A/D CONTROL REGISTER
-    ------------------------------------------------------------
+        ------------------------------------------------------------
 	RW-0    RW-0    U-0     U-0    RW-0   RW-0    RW-0     RW-0     (default values, 1=set, 0=set, x=unknown)
 	ADFM    VCFG     -       -     CHS1   CHS0   GO/DONE   ADON
 	bit7    bit6   bit5    bit4    bit3   bit2    bit1     bit0
@@ -105,7 +105,7 @@ GP4/AN3/T1G/OSC2/CLKOUT  3 |          | 6  GP1/AN1/CIN-/VREF/ICSPCLK
 	------------------------------------------------------------------
 	RW-1    RW-1    RW-1     RW-1     RW-1     RW-1      RW-1     RW-1    ((default values, 1=set, 0=set)
 	GPPU   INTEDG   T0CS     T0SE      PSA      PS2       PS1      PS0
-    bit7    bit6    bit5     bit4     bit3     bit2      bit1     bit0
+	bit7    bit6    bit5     bit4     bit3     bit2      bit1     bit0
 	-------------------------------------------------------------------
 
 	bit 7 GPPU: GPIO Pull-up Enable bit
@@ -303,11 +303,11 @@ void main(void)
 	OSCCAL = __osccal_val();    // Load Oscillator Calibration
 	ANSEL  = 0x00;              // Digital IOs only
 	TRISIO = 0x10;              // GP4 input, rest all output
-	CMCON  = 0x07;		        // Shut off the Comparator, so that pins are available for ADC
+	CMCON  = 0x07;		    // Shut off the Comparator, so that pins are available for ADC
 	VRCON  = 0x00;	            // Shut off the Voltage Reference for Comparator
-    OPTION_REG = 0x80;          // Disable pull-ups
+	OPTION_REG = 0x80;          // Disable pull-ups
     
-    FIRE = 0;
+	FIRE = 0;
 
 #if ENABLE_UART_DEBUG
 	// Intialize Soft UART
@@ -322,17 +322,17 @@ void main(void)
 			address = ir_code >> 16;
 			command = ir_code >> 8;
             
-            switch(command)
-            {
-                case 57490:
-                    FIRE = 1;
-                    __delay_ms(200);
-                    FIRE = 0;
-                    break;
+			switch(command)
+			{
+				case 57490:
+					FIRE = 1;
+					__delay_ms(200);
+					FIRE = 0;
+					break;
                 
-                default:
-                    break;
-            }
+				default:
+					break;
+			}
 
 #if ENABLE_UART_DEBUG
 			UART_Transmit('C');
@@ -353,7 +353,7 @@ void main(void)
 			UART_Transmit(' ');
         
 			for (i=0; i<8; i++) str3[i] = '\0';
-    		sprintf(str3, "%u", command);
+			sprintf(str3, "%u", command);
         
 			for (i=0; i<8; i++)
 			{
@@ -361,9 +361,9 @@ void main(void)
 				UART_Transmit(str3[i]);
 			}
             
-            UART_Transmit(0x0D);
-            UART_Transmit(0x0A);
+			UART_Transmit(0x0D);
+			UART_Transmit(0x0A);
 #endif
-        }
+		}
 	}
 }
