@@ -56,7 +56,7 @@ Assembly.
 | 6  | Output the Internal PIC clock | [URL](projects/osc_c) |
 | 7  | Light Dependent resistor Circuit |  [URL](projects/LDR) |
 | 8  | PWM Fan Circuit for Dreambox DM920|  [URL](projects/pwm_fan) |
-
+| 9  | IR Switch Circuit|  [URL](projects/ir_switch) |
 
 Communication
 -----------
